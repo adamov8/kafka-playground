@@ -52,7 +52,7 @@ public class ConsumerTest {
 
   @Test
   void testProcessAndSendList() {
-    InMemorySink<String> messagesProcessed = connector.sink("messages-processed");
+    messagesProcessed = connector.sink("messages-processed");
 
     List<String> messages = IntStream.range(1, 11)
         .boxed()
