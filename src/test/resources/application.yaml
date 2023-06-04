@@ -1,0 +1,4 @@
+quarkus:
+  kafka:
+    devservices:
+      enabled: false
