@@ -12,6 +12,7 @@ import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.acme.kafka.config.Consumer;
 import org.eclipse.microprofile.reactive.messaging.Message;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -27,15 +28,25 @@ public class ConsumerTest {
   @Any
   InMemoryConnector connector;
 
+  private InMemorySink<String> messagesProcessed;
+
+  @AfterEach
+  void tearDown() {
+    if (messagesProcessed != null) {
+      messagesProcessed.clear();
+    }
+  }
+
   @Test
   void testProcess() {
-    InMemorySink<String> messagesProcessed = connector.sink("messages-processed");
+    messagesProcessed = connector.sink("messages-processed");
 
     String hello = "Hello";
     log.info("Sending message {}", hello);
     consumer.process(hello);
 
     Assertions.assertEquals(hello, messagesProcessed.received().get(0).getPayload());
+    messagesProcessed.clear();
   }
 
   @Test
@@ -53,5 +64,6 @@ public class ConsumerTest {
         .map(Message::getPayload)
         .toList();
     Assertions.assertIterableEquals(messages, processedMessage);
+    messagesProcessed.clear();
   }
 }
