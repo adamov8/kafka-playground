@@ -4,6 +4,7 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
+import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 
@@ -38,19 +39,19 @@ public class ConsumerTest {
   }
 
   @Test
-  void testProcess() {
+  void testProcessAndSend() {
     messagesProcessed = connector.sink("messages-processed");
 
     String hello = "Hello";
     log.info("Sending message {}", hello);
-    consumer.process(hello);
+    consumer.processAndSend(hello);
 
     Assertions.assertEquals(hello, messagesProcessed.received().get(0).getPayload());
     messagesProcessed.clear();
   }
 
   @Test
-  void testProcessList() {
+  void testProcessAndSendList() {
     InMemorySink<String> messagesProcessed = connector.sink("messages-processed");
 
     List<String> messages = IntStream.range(1, 11)
@@ -58,12 +59,26 @@ public class ConsumerTest {
         .map(String::valueOf)
         .toList();
     log.info("Sending messages: {}", messages);
-    messages.forEach(consumer::process);
+    messages.forEach(consumer::processAndSend);
 
     List<String> processedMessage = messagesProcessed.received().stream()
         .map(Message::getPayload)
         .toList();
     Assertions.assertIterableEquals(messages, processedMessage);
     messagesProcessed.clear();
+  }
+
+  @Test
+  void testProcess() {
+    InMemorySource<String> messagesIn = connector.source("messages-in-2");
+    List<String> messages = IntStream.range(1, 11)
+        .boxed()
+        .map(String::valueOf)
+        .toList();
+    log.info("Sending messages: {}", messages);
+
+    messages.forEach(messagesIn::send);
+
+    Assertions.assertIterableEquals(messages, consumer.getMessagesProcessed());
   }
 }
